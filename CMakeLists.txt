@@ -78,7 +78,6 @@ add_executable(ac_e2e tests/e2e.cpp)
 target_link_libraries(ac_e2e PRIVATE ac_core)
 
 # ---- install --------------------------------------------------------------
-install(TARGETS AutoClicker RUNTIME DESTINATION bin)
-if(APPLE)
-  install(TARGETS AutoClicker BUNDLE DESTINATION .)
-endif()
+install(TARGETS AutoClicker
+        BUNDLE DESTINATION .
+        RUNTIME DESTINATION bin)
