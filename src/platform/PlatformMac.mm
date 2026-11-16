@@ -9,6 +9,7 @@
 #import <Carbon/Carbon.h>
 
 #include <QElapsedTimer>
+#include <dlfcn.h>
 #include <QMutex>
 #include <QString>
 #include <QThread>
@@ -116,6 +117,21 @@ int macToVk(int code) {
         if (vkToMac(vk) == code) return vk;
     }
     return 0;
+}
+
+// macOS 15 起 CGWindowListCreateImage 被标记为 obsoleted（编译期不可用），
+// 但运行时仍然存在；用 dlsym 取符号，兼容 12–15，若真的取不到就退回屏幕裁剪。
+typedef CGImageRef (*WindowImageFn)(CGRect, CGWindowListOption, CGWindowID, CGWindowImageOption);
+
+CGImageRef createWindowImage(CGRect rect, CGWindowListOption opts, CGWindowID wid, CGWindowImageOption imgOpts) {
+    static WindowImageFn fn = nullptr;
+    static bool looked = false;
+    if (!looked) {
+        looked = true;
+        fn = reinterpret_cast<WindowImageFn>(dlsym(RTLD_DEFAULT, "CGWindowListCreateImage"));
+    }
+    if (!fn) return nullptr;
+    return fn(rect, opts, wid, imgOpts);
 }
 
 QImage fromCGImage(CGImageRef img) {
@@ -350,8 +366,8 @@ void keyTap(int vk) {
 QImage grabScreen(const QRect& area) {
     const QRect a = area.isNull() ? virtualScreen() : area;
     const CGRect r = CGRectMake(a.x() / g_scale, a.y() / g_scale, a.width() / g_scale, a.height() / g_scale);
-    CGImageRef img = CGWindowListCreateImage(r, kCGWindowListOptionOnScreenOnly, kCGNullWindowID,
-                                             kCGWindowImageBestResolution);
+    CGImageRef img = createWindowImage(r, kCGWindowListOptionOnScreenOnly, kCGNullWindowID,
+                                       kCGWindowImageBestResolution);
     QImage out = fromCGImage(img);
     if (img) CFRelease(img);
     if (!out.isNull() && (out.width() != a.width() || out.height() != a.height()))
@@ -377,10 +393,14 @@ QRect windowRect(quintptr id) {
 
 QImage grabWindow(quintptr id) {
     if (!id) return {};
-    CGImageRef img = CGWindowListCreateImage(CGRectNull, kCGWindowListOptionIncludingWindow, CGWindowID(id),
-                                             kCGWindowImageBoundsIgnoreFraming);
+    CGImageRef img = createWindowImage(CGRectNull, kCGWindowListOptionIncludingWindow, CGWindowID(id),
+                                       kCGWindowImageBoundsIgnoreFraming);
     QImage out = fromCGImage(img);
     if (img) CFRelease(img);
+    if (out.isNull()) {
+        const QRect r = windowRect(id);
+        if (!r.isEmpty()) out = grabScreen(r);   // 兜底：直接从屏幕裁这块
+    }
     return out;
 }
 

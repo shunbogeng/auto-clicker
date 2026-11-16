@@ -7,7 +7,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
+$root = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
 Set-Location $root
 
 $exe = Get-ChildItem -Path $BuildDir -Recurse -Filter "AutoClicker.exe" |
