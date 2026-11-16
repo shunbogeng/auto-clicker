@@ -10,11 +10,74 @@
 #include <QDialogButtonBox>
 #include <QFormLayout>
 #include <QHBoxLayout>
+#include <QKeyEvent>
 #include <QLabel>
 #include <QPushButton>
 #include <QVBoxLayout>
 
 namespace ac {
+
+namespace {
+
+// 按下哪个键就记哪个键的按钮（不再限定 F1–F12）
+class KeyCapButton : public QPushButton {
+public:
+    explicit KeyCapButton(QWidget* parent = nullptr) : QPushButton(parent) {
+        setFocusPolicy(Qt::StrongFocus);
+        setMinimumWidth(130);
+        setToolTip("点一下这个按钮，然后按下你要用的键；Backspace 清空");
+        updateText();
+    }
+
+    void setCapture(const QString& canonical) {
+        m_combo = canonical;
+        updateText();
+    }
+    QString capture() const { return m_combo; }
+
+protected:
+    void keyPressEvent(QKeyEvent* e) override {
+        const int k = e->key();
+        if (k == Qt::Key_Backspace || k == Qt::Key_Delete) {
+            m_combo.clear();
+            updateText();
+            return;
+        }
+        if (k == Qt::Key_Escape) {   // Esc 交给对话框
+            QPushButton::keyPressEvent(e);
+            return;
+        }
+        // 按下的是纯修饰键时先不记录，等主键
+        if (k == Qt::Key_Shift || k == Qt::Key_Control || k == Qt::Key_Alt || k == Qt::Key_Meta)
+            return;
+
+        int mods = 0;
+        const Qt::KeyboardModifiers m = e->modifiers();
+        if (m & Qt::ControlModifier) mods |= ModCtrl;
+        if (m & Qt::AltModifier) mods |= ModAlt;
+        if (m & Qt::ShiftModifier) mods |= ModShift;
+        if (m & Qt::MetaModifier) mods |= ModWin;
+
+        const QString combo = comboFromQtKey(k, mods);
+        if (combo.isEmpty()) return;
+        m_combo = combo;
+        updateText();
+    }
+
+private:
+    void updateText() {
+        if (m_combo.isEmpty()) {
+            setText("按下要用的键…");
+            return;
+        }
+        const KeyCombo c = parseCombo(m_combo);
+        setText(c.valid() ? c.label() : m_combo);
+    }
+
+    QString m_combo;
+};
+
+}  // namespace
 
 SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent) {
     setWindowTitle("全局设置");
@@ -33,27 +96,25 @@ SettingsDialog::SettingsDialog(QWidget* parent) : QDialog(parent) {
 
     m_dbl = new QCheckBox("双击", this);
 
-    m_emgKey = new QComboBox(this);
-    for (int i = 1; i <= 12; ++i) m_emgKey->addItem(QString("f%1").arg(i));
-    m_emgKey->addItem("pause");
-    m_emgOn = new QCheckBox("启用", this);
+    m_hkKey = new KeyCapButton(this);
+    m_hkOn = new QCheckBox("启用", this);
 
     auto* typeRow = new QHBoxLayout;
     typeRow->addWidget(m_type, 1);
     typeRow->addWidget(m_key, 1);
     typeRow->addWidget(m_dbl);
 
-    auto* emgRow = new QHBoxLayout;
-    emgRow->addWidget(new QLabel("键位：", this));
-    emgRow->addWidget(m_emgKey, 1);
-    emgRow->addWidget(m_emgOn);
+    auto* hkRow = new QHBoxLayout;
+    hkRow->addWidget(m_hkKey, 1);
+    hkRow->addWidget(m_hkOn);
 
     auto* form = new QFormLayout;
     form->addRow("点击类型", typeRow);
-    form->addRow("全局急停", emgRow);
+    form->addRow("全局热键", hkRow);
 
     auto* tip = new QLabel("提示：键盘按键与侧键只在「模拟点击」类功能里生效；"
-                           "急停键按下会立刻停掉所有任务（录制中的会先存成脚本）。",
+                           "全局热键只有一个，按下就启动/停止「当前页签」的功能，"
+                           "字母、数字、F 键、方向键、小键盘、符号键都支持，也可以带 Ctrl/Alt/Shift。",
                            this);
     tip->setWordWrap(true);
 
@@ -85,9 +146,8 @@ void SettingsDialog::loadFromConfig() {
     m_key->setEnabled(c.click.type == "key");
     m_dbl->setChecked(c.click.dbl);
 
-    int ei = m_emgKey->findText(c.emergency.hotkey);
-    if (ei >= 0) m_emgKey->setCurrentIndex(ei);
-    m_emgOn->setChecked(c.emergency.enabled);
+    static_cast<KeyCapButton*>(m_hkKey)->setCapture(c.hotkey.key);
+    m_hkOn->setChecked(c.hotkey.enabled);
 }
 
 void SettingsDialog::applyToConfig() {
@@ -95,9 +155,11 @@ void SettingsDialog::applyToConfig() {
     c.click.type = m_type->currentData().toString();
     c.click.key = m_key->currentText();
     c.click.dbl = m_dbl->isChecked();
-    c.emergency.hotkey = m_emgKey->currentText();
-    c.emergency.enabled = m_emgOn->isChecked();
+    const QString captured = static_cast<KeyCapButton*>(m_hkKey)->capture();
+    if (!captured.isEmpty()) c.hotkey.key = captured;
+    c.hotkey.enabled = m_hkOn->isChecked();
     App::instance().saveCfg();
+    App::instance().applyHotkeysNow();
 }
 
 }  // namespace ac

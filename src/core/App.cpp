@@ -72,16 +72,13 @@ bool App::init() {
     });
 
     m_hotkeys = new Hotkeys(this);
-    connect(m_hotkeys, &Hotkeys::triggered, this, &App::onHotkey);
+    connect(m_hotkeys, &Hotkeys::triggered, this, &App::onGlobalHotkey);
     applyHotkeysNow();
 
     logLine(QString("连点器启动：平台 %1，窗口 %2x%3")
                 .arg(pl::backendName())
                 .arg(pl::screenSize().width())
                 .arg(pl::screenSize().height()));
-    if (m_cfg.emergency.enabled)
-        logLine(QString("全局急停已启用：%1").arg(parseCombo(m_cfg.emergency.hotkey).label()));
-
     m_ready = true;
     return true;
 }
@@ -376,30 +373,26 @@ QString App::probeMatch(bool watch) {
     return QString("命中，匹配度 %1，位置 (%2, %3)").arg(h.score, 0, 'f', 3).arg(center.x()).arg(center.y());
 }
 
-void App::onHotkey(const QString& action) {
-    if (action == "emergency") {
-        emergencyStop();
-        return;
-    }
-    emit hotkeyAction(action);
-    if (action == "mouse") toggleMouse();
-    else if (action == "image") toggleImage();
-    else if (action == "watch") toggleWatch();
-    else if (action == "record") toggleRecord();
-}
+void App::setActiveTab(int index) { m_activeTab = index; }
 
-void App::emergencyStop() {
-    logLine("急停：停掉所有任务");
-    if (recording()) {
-        m_pending = m_rec->stop();
-        if (!m_pending.isEmpty()) {
-            const QString name = QString("脚本_急停_%1").arg(QDateTime::currentDateTime().toString("MMdd_HHmmss"));
-            saveRecording(name, m_pending);
-            m_pending.clear();
-        }
+void App::onGlobalHotkey() { toggleActive(); }
+
+// 全局热键的作用对象是「当前页签」：
+// 鼠标页 -> 鼠标连点；找图页 -> 找图连点；监视页 -> 监视；录制页 -> 录制/回放。
+void App::toggleActive() {
+    switch (m_activeTab) {
+        case 0: toggleMouse(); break;
+        case 1: toggleImage(); break;
+        case 2: toggleWatch(); break;
+        case 3:
+            if (recording()) toggleRecord();
+            else if (replayRunning()) toggleReplay();
+            else toggleRecord();
+            break;
+        default:
+            logLine("日志页没有可切换的功能，切到前四个页签再用全局热键");
+            break;
     }
-    stopPointerTasks();
-    emit stateChanged();
 }
 
 void App::stopAll(bool quiet) {
@@ -407,7 +400,7 @@ void App::stopAll(bool quiet) {
     if (recording()) {
         m_pending = m_rec->stop();
         if (!m_pending.isEmpty()) {
-            const QString name = QString("脚本_急停_%1").arg(QDateTime::currentDateTime().toString("MMdd_HHmmss"));
+            const QString name = QString("脚本_中断_%1").arg(QDateTime::currentDateTime().toString("MMdd_HHmmss"));
             saveRecording(name, m_pending);
             m_pending.clear();
         }

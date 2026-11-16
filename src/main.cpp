@@ -10,7 +10,7 @@ int main(int argc, char** argv) {
     QApplication app(argc, argv);
     app.setApplicationName("AutoClicker");
     app.setOrganizationName("AutoClicker");
-    app.setApplicationVersion("2.0.0");
+    app.setApplicationVersion("2.1.0");
     app.setWindowIcon(QIcon(":/icon.png"));
 
     ac::App& core = ac::App::instance();

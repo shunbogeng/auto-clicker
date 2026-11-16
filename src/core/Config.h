@@ -8,8 +8,6 @@ namespace ac {
 
 struct MouseCfg {
     int interval = 1000;
-    QString hotkey = "f6";
-    bool hotkeyEnabled = false;   // 第一次打开默认关闭，避免占键位
 };
 
 struct ImageCfg {
@@ -22,8 +20,6 @@ struct ImageCfg {
     bool limitEnabled = false;
     int limitCount = 1;
     QString onMiss = "wait";      // wait / stop
-    QString hotkey = "f7";
-    bool hotkeyEnabled = false;
 };
 
 struct WatchCfg {
@@ -37,8 +33,6 @@ struct WatchCfg {
     QString onMiss = "wait";
     QString process;
     QString title;
-    QString hotkey = "f8";
-    bool hotkeyEnabled = false;
 };
 
 struct RecordCfg {
@@ -47,8 +41,6 @@ struct RecordCfg {
     int fixedInterval = 1000;
     int loops = 1;
     bool loopForever = false;
-    QString hotkey = "f9";
-    bool hotkeyEnabled = false;
 };
 
 struct ClickCfg {
@@ -57,9 +49,10 @@ struct ClickCfg {
     bool dbl = false;
 };
 
-struct EmergencyCfg {
-    QString hotkey = "f12";
-    bool enabled = true;
+// 全局只有一个热键：按下就启动/停止「当前页签」的功能，键位在设置里改。
+struct HotkeyCfg {
+    QString key = "f6";
+    bool enabled = false;   // 默认关闭，不占键位
 };
 
 struct UiCfg {
@@ -74,7 +67,7 @@ struct Config {
     WatchCfg watch;
     RecordCfg record;
     ClickCfg click;
-    EmergencyCfg emergency;
+    HotkeyCfg hotkey;
     UiCfg ui;
 
     static Config load();

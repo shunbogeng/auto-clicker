@@ -50,6 +50,16 @@ if ($OpenCvDir) {
     }
 }
 
+# 一键解除「来自网络」标记再启动（没有代码签名时，这是最省事的免费办法）
+$bat = Join-Path $stage "Unblock-and-Run.bat"
+$batLines = @(
+    '@echo off',
+    'powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-ChildItem -LiteralPath ''%~dp0'' -Recurse -File | Unblock-File"',
+    'start "" "%~dp0AutoClicker.exe"'
+)
+$batText = ($batLines -join "`r`n") + "`r`n"
+[IO.File]::WriteAllText($bat, $batText, (New-Object Text.UTF8Encoding $false))
+
 Copy-Item "docs\使用说明.md" $stage -ErrorAction SilentlyContinue
 Copy-Item "LICENSE" $stage -ErrorAction SilentlyContinue
 Copy-Item "packaging\THIRD-PARTY-NOTICES.md" $stage -ErrorAction SilentlyContinue

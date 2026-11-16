@@ -61,8 +61,6 @@ Config Config::load() {
 
     QJsonObject m = obj("mouse");
     c.mouse.interval = m.value("interval").toInt(c.mouse.interval);
-    c.mouse.hotkey = m.value("hotkey").toString(c.mouse.hotkey);
-    c.mouse.hotkeyEnabled = m.value("hotkey_enabled").toBool(c.mouse.hotkeyEnabled);
 
     QJsonObject i = obj("image");
     c.image.tmpl = i.value("template").toString(c.image.tmpl);
@@ -74,8 +72,6 @@ Config Config::load() {
     c.image.limitEnabled = i.value("limit_enabled").toBool(c.image.limitEnabled);
     c.image.limitCount = i.value("limit_count").toInt(c.image.limitCount);
     c.image.onMiss = i.value("on_miss").toString(c.image.onMiss);
-    c.image.hotkey = i.value("hotkey").toString(c.image.hotkey);
-    c.image.hotkeyEnabled = i.value("hotkey_enabled").toBool(c.image.hotkeyEnabled);
 
     QJsonObject w = obj("watch");
     c.watch.tmpl = w.value("template").toString(c.watch.tmpl);
@@ -88,8 +84,6 @@ Config Config::load() {
     c.watch.onMiss = w.value("on_miss").toString(c.watch.onMiss);
     c.watch.process = w.value("process").toString(c.watch.process);
     c.watch.title = w.value("title").toString(c.watch.title);
-    c.watch.hotkey = w.value("hotkey").toString(c.watch.hotkey);
-    c.watch.hotkeyEnabled = w.value("hotkey_enabled").toBool(c.watch.hotkeyEnabled);
 
     QJsonObject r = obj("record");
     c.record.script = r.value("script").toString(c.record.script);
@@ -97,17 +91,16 @@ Config Config::load() {
     c.record.fixedInterval = r.value("fixed_interval").toInt(c.record.fixedInterval);
     c.record.loops = r.value("loops").toInt(c.record.loops);
     c.record.loopForever = r.value("loop_forever").toBool(c.record.loopForever);
-    c.record.hotkey = r.value("hotkey").toString(c.record.hotkey);
-    c.record.hotkeyEnabled = r.value("hotkey_enabled").toBool(c.record.hotkeyEnabled);
 
     QJsonObject k = obj("click");
     c.click.type = k.value("type").toString(c.click.type);
     c.click.key = k.value("key").toString(c.click.key);
     c.click.dbl = k.value("dbl").toBool(c.click.dbl);
 
-    QJsonObject e = obj("emergency");
-    c.emergency.hotkey = e.value("hotkey").toString(c.emergency.hotkey);
-    c.emergency.enabled = e.value("enabled").toBool(c.emergency.enabled);
+    // 老配置里的 emergency 段直接忽略（急停键已移除），旧热键不再迁移。
+    QJsonObject h = obj("hotkey");
+    c.hotkey.key = h.value("key").toString(c.hotkey.key);
+    c.hotkey.enabled = h.value("enabled").toBool(c.hotkey.enabled);
 
     QJsonObject u = obj("ui");
     c.ui.w = u.value("w").toInt(c.ui.w);
@@ -118,9 +111,7 @@ Config Config::load() {
 
 bool Config::save() const {
     QJsonObject root;
-    root["mouse"] = QJsonObject{{"interval", mouse.interval},
-                                {"hotkey", mouse.hotkey},
-                                {"hotkey_enabled", mouse.hotkeyEnabled}};
+    root["mouse"] = QJsonObject{{"interval", mouse.interval}};
     root["image"] = QJsonObject{{"template", image.tmpl},
                                 {"confidence", image.confidence},
                                 {"interval", image.interval},
@@ -129,9 +120,7 @@ bool Config::save() const {
                                 {"multi", image.multi},
                                 {"limit_enabled", image.limitEnabled},
                                 {"limit_count", image.limitCount},
-                                {"on_miss", image.onMiss},
-                                {"hotkey", image.hotkey},
-                                {"hotkey_enabled", image.hotkeyEnabled}};
+                                {"on_miss", image.onMiss}};
     root["watch"] = QJsonObject{{"template", watch.tmpl},
                                 {"confidence", watch.confidence},
                                 {"interval", watch.interval},
@@ -141,18 +130,14 @@ bool Config::save() const {
                                 {"limit_count", watch.limitCount},
                                 {"on_miss", watch.onMiss},
                                 {"process", watch.process},
-                                {"title", watch.title},
-                                {"hotkey", watch.hotkey},
-                                {"hotkey_enabled", watch.hotkeyEnabled}};
+                                {"title", watch.title}};
     root["record"] = QJsonObject{{"script", record.script},
                                  {"speed_mode", record.speedMode},
                                  {"fixed_interval", record.fixedInterval},
                                  {"loops", record.loops},
-                                 {"loop_forever", record.loopForever},
-                                 {"hotkey", record.hotkey},
-                                 {"hotkey_enabled", record.hotkeyEnabled}};
+                                 {"loop_forever", record.loopForever}};
     root["click"] = QJsonObject{{"type", click.type}, {"key", click.key}, {"dbl", click.dbl}};
-    root["emergency"] = QJsonObject{{"hotkey", emergency.hotkey}, {"enabled", emergency.enabled}};
+    root["hotkey"] = QJsonObject{{"key", hotkey.key}, {"enabled", hotkey.enabled}};
     root["ui"] = QJsonObject{{"w", ui.w}, {"h", ui.h}, {"tab", ui.tab}};
 
     QFile f(configPath());

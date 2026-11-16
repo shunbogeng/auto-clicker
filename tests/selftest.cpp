@@ -55,6 +55,13 @@ void testKeys() {
     check(keyName(0x78) == "f9", "0x78 -> f9");
     check(comboFromVk(ModCtrl | ModShift, 0x70) == "ctrl+shift+f1", "反向拼串 ctrl+shift+f1");
     check(!parseCombo("ctrl+").valid(), "残缺组合键判为无效");
+    // 不再只有 F1–F12：字母、方向键、小键盘、F13+、符号键都要能解析
+    check(parseCombo("g").vk == 0x47, "字母 g 可绑定");
+    check(parseCombo("ctrl+alt+x").mods == (ModCtrl | ModAlt), "组合键修饰位正确");
+    check(parseCombo("up").vk == 0x26, "方向键 up 可绑定");
+    check(parseCombo("num5").vk == 0x65, "小键盘 5 可绑定");
+    check(parseCombo("f13").vk == 0x7C, "F13 可绑定");
+    check(parseCombo("minus").vk == 0xBD, "符号键 - 可绑定");
 }
 
 void testConfig() {
@@ -65,14 +72,16 @@ void testConfig() {
     c.watch.process = "game.exe";
     c.record.loops = 7;
     c.click.type = "x1";
-    c.emergency.hotkey = "pause";
+    c.hotkey.key = "ctrl+shift+g";
+    c.hotkey.enabled = true;
     check(c.save(), "配置能写盘");
     Config back = Config::load();
     check(back.mouse.interval == 777, "间隔回读一致");
     check(qAbs(back.image.confidence - 0.93) < 1e-6, "置信度回读一致");
     check(back.watch.process == "game.exe", "进程名回读一致");
     check(back.click.type == "x1", "点击类型回读一致");
-    check(back.emergency.hotkey == "pause", "急停键回读一致");
+    check(back.hotkey.key == "ctrl+shift+g", "全局热键回读一致");
+    check(back.hotkey.enabled, "全局热键开关回读一致");
 }
 
 void testMatch() {

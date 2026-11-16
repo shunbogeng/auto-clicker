@@ -118,6 +118,11 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
         setMinimumSize(350, 400);
     }
     if (c.ui.tab >= 0 && c.ui.tab < m_tabs->count()) m_tabs->setCurrentIndex(c.ui.tab);
+    App::instance().setActiveTab(m_tabs->currentIndex());
+    connect(m_tabs, &QTabWidget::currentChanged, this, [this](int index) {
+        App::instance().setActiveTab(index);
+        refreshUi();
+    });
 
     connect(settingsBtn, &QPushButton::clicked, this, [this] {
         SettingsDialog dlg(this);
@@ -211,15 +216,12 @@ QWidget* MainWindow::buildMousePage() {
     m_mouseBtn->setMinimumHeight(34);
     m_mouseBtn->setStyleSheet("QPushButton{background:#0f766e;color:white;border-radius:6px;font-weight:600;}");
 
-    m_mouseHk = makeHotkeyRow(page, "mouse", App::instance().cfg().mouse.hotkey,
-                              App::instance().cfg().mouse.hotkeyEnabled);
     m_mouseState = new QLabel("还没开始", page);
     m_mouseState->setStyleSheet("color:#64748b;");
 
     lay->addLayout(row);
     lay->addWidget(hintLabel("在鼠标当前位置按上面的间隔反复点击；键盘/侧键在「设置」里切换。", page));
     lay->addWidget(m_mouseBtn);
-    lay->addWidget(m_mouseHk.row);
     lay->addWidget(m_mouseState);
     lay->addStretch(1);
 
@@ -291,8 +293,6 @@ QWidget* MainWindow::buildImagePage() {
     m_imgState->setStyleSheet("color:#475569;");
     m_imgState->setWordWrap(true);
 
-    m_imgHk = makeHotkeyRow(page, "image", App::instance().cfg().image.hotkey,
-                            App::instance().cfg().image.hotkeyEnabled);
 
     lay->addLayout(top);
     lay->addWidget(preview);
@@ -302,7 +302,7 @@ QWidget* MainWindow::buildImagePage() {
     lay->addWidget(m_imgBtn);
     auto* testRow = new QHBoxLayout;
     testRow->addWidget(m_imgTestBtn);
-    testRow->addWidget(m_imgHk.row, 1);
+    testRow->addStretch(1);
     lay->addLayout(testRow);
     lay->addWidget(hintLabel("命中后点它的中心；最高匹配度会写进日志。", page));
     lay->addWidget(m_imgState);
@@ -407,8 +407,6 @@ QWidget* MainWindow::buildWatchPage() {
     m_watchState->setWordWrap(true);
     m_watchState->setStyleSheet("color:#475569;");
 
-    m_watchHk = makeHotkeyRow(page, "watch", App::instance().cfg().watch.hotkey,
-                              App::instance().cfg().watch.hotkeyEnabled);
 
     lay->addLayout(winRow);
     lay->addLayout(winRow2);
@@ -418,7 +416,6 @@ QWidget* MainWindow::buildWatchPage() {
     lay->addLayout(row2);
     lay->addWidget(m_watchBtn);
     lay->addWidget(hintLabel("窗口被挡住也能看到；命中后先置顶再点。", page));
-    lay->addWidget(m_watchHk.row);
     lay->addWidget(m_watchState);
     lay->addStretch(1);
 
@@ -502,8 +499,6 @@ QWidget* MainWindow::buildRecordPage() {
     m_recState->setStyleSheet("color:#475569;");
     m_recState->setWordWrap(true);
 
-    m_recHk = makeHotkeyRow(page, "record", App::instance().cfg().record.hotkey,
-                            App::instance().cfg().record.hotkeyEnabled);
 
     lay->addLayout(row1);
     lay->addWidget(m_scriptInfo);
@@ -511,7 +506,6 @@ QWidget* MainWindow::buildRecordPage() {
     lay->addLayout(row3);
     lay->addWidget(m_recBtn);
     lay->addWidget(m_playBtn);
-    lay->addWidget(m_recHk.row);
     lay->addWidget(m_recState);
     lay->addStretch(1);
 
@@ -563,31 +557,6 @@ QWidget* MainWindow::buildLogPage() {
     return page;
 }
 
-MainWindow::HotkeyWidgets MainWindow::makeHotkeyRow(QWidget* parent, const QString& action,
-                                                    const QString& current, bool enabled) {
-    HotkeyWidgets w;
-    Q_UNUSED(action);
-    w.row = new QWidget(parent);
-    auto* box = new QHBoxLayout(w.row);
-    box->setContentsMargins(0, 0, 0, 0);
-    w.enabled = new QCheckBox("全局热键开关", w.row);
-    w.enabled->setChecked(enabled);
-    w.key = new QComboBox(w.row);
-    for (int i = 1; i <= 12; ++i) w.key->addItem(QString("f%1").arg(i));
-    w.key->addItem("pause");
-    int idx = w.key->findText(current);
-    if (idx >= 0) w.key->setCurrentIndex(idx);
-    w.key->setEnabled(enabled);
-    w.key->setFixedWidth(96);
-    box->addWidget(w.enabled);
-    box->addWidget(w.key);
-    box->addStretch(1);
-    connect(w.enabled, &QCheckBox::toggled, w.key, &QComboBox::setEnabled);
-    connect(w.enabled, &QCheckBox::toggled, this, [this](bool) { syncConfigFromUi(); });
-    connect(w.key, &QComboBox::currentIndexChanged, this, [this](int) { syncConfigFromUi(); });
-    return w;
-}
-
 void MainWindow::bindEdits() {
     const QVector<QObject*> widgets = {
         m_mouseInterval, m_imgInterval, m_imgOffX, m_imgOffY, m_imgLimit, m_watchInterval, m_watchLimit,
@@ -609,8 +578,6 @@ void MainWindow::syncConfigFromUi() {
     if (m_loading) return;
     Config& c = App::instance().cfg();
     c.mouse.interval = m_mouseInterval->value();
-    c.mouse.hotkey = m_mouseHk.key->currentText();
-    c.mouse.hotkeyEnabled = m_mouseHk.enabled->isChecked();
 
     c.image.confidence = m_imgConf->value() / 100.0;
     c.image.interval = m_imgInterval->value();
@@ -619,8 +586,6 @@ void MainWindow::syncConfigFromUi() {
     c.image.limitEnabled = m_imgLimitOn->isChecked();
     c.image.limitCount = m_imgLimit->value();
     c.image.onMiss = m_imgOnMiss->currentData().toString();
-    c.image.hotkey = m_imgHk.key->currentText();
-    c.image.hotkeyEnabled = m_imgHk.enabled->isChecked();
 
     c.watch.confidence = m_watchConf->value() / 100.0;
     c.watch.interval = m_watchInterval->value();
@@ -628,15 +593,11 @@ void MainWindow::syncConfigFromUi() {
     c.watch.limitCount = m_watchLimit->value();
     c.watch.process = m_watchProcess->text().trimmed();
     c.watch.title = m_watchTitle->text().trimmed();
-    c.watch.hotkey = m_watchHk.key->currentText();
-    c.watch.hotkeyEnabled = m_watchHk.enabled->isChecked();
 
     c.record.speedMode = m_speedMode->currentData().toString();
     c.record.fixedInterval = m_fixedInterval->value();
     c.record.loops = m_loops->value();
     c.record.loopForever = m_loopForever->isChecked();
-    c.record.hotkey = m_recHk.key->currentText();
-    c.record.hotkeyEnabled = m_recHk.enabled->isChecked();
     if (m_scriptCombo->currentIndex() >= 0)
         c.record.script = m_scriptCombo->itemData(m_scriptCombo->currentIndex()).toString();
 
@@ -689,14 +650,18 @@ void MainWindow::refreshUi() {
                                   .arg(App::instance().cfg().click.dbl ? "（双击）" : ""));
 
     QString hint;
+    const Config& c = App::instance().cfg();
+    QString hk = "全局热键未启用（设置里可开）";
+    if (c.hotkey.enabled) {
+        const KeyCombo combo = parseCombo(c.hotkey.key);
+        hk = QString("全局热键 %1：启动/停止当前页签").arg(combo.valid() ? combo.label() : c.hotkey.key);
+    }
     if (app.recording())
-        hint = "录制中：勾选的「热键开关」可以被其它程序占用，按热键再结束";
+        hint = "录制中：再按一次全局热键就结束并保存脚本";
     else if (app.mouseRunning() || app.imageRunning() || app.watchRunning())
-        hint = "任务运行中，把鼠标留空就能让它点；急停键随时可以叫停";
-    else if (App::instance().cfg().emergency.enabled)
-        hint = QString("急停键：%1").arg(parseCombo(App::instance().cfg().emergency.hotkey).label());
+        hint = QString("任务运行中，把鼠标留空让它点；%1").arg(hk);
     else
-        hint = "急停键已关闭，可在「设置」里打开";
+        hint = hk;
     m_hint->setText(hint);
 
     updatePreview();

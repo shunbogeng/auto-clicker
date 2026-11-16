@@ -8,7 +8,7 @@
 [Setup]
 AppId={{A9B3F1C7-2E4D-4B36-9A17-AUTOCLICKER}}
 AppName={#AppName}
-AppVersion=2.0.0
+AppVersion=2.1.0
 DefaultDirName={autopf}\AutoClicker
 DefaultGroupName=AutoClicker
 OutputBaseFilename=AutoClicker-Setup

@@ -11,7 +11,7 @@ APP="$BUILD_DIR/AutoClicker"
 mkdir -p "$OUT_DIR"
 
 VERSION=$(sed -n 's/^project(AutoClicker VERSION \(.*\) LANGUAGES.*/\1/p' "$ROOT/CMakeLists.txt" | head -1)
-VERSION="${VERSION:-2.0.0}"
+VERSION="${VERSION:-2.1.0}"
 
 stage="$OUT_DIR/AutoClicker"
 rm -rf "$stage"

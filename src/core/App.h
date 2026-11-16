@@ -47,8 +47,9 @@ public:
     void toggleWatch();
     void toggleRecord();
     void toggleReplay();
-    void stopAll(bool quiet = false);      // 停掉所有任务（急停用）
-    void emergencyStop();
+    void stopAll(bool quiet = false);      // 停掉所有任务
+    void setActiveTab(int index);          // 界面切换页签时同步，全局热键按它决定作用对象
+    void toggleActive();                   // 启动/停止当前页签的功能
 
     // 录制结果
     void saveRecording(const QString& name, const QVector<pl::RecEvent>& events);
@@ -65,7 +66,6 @@ signals:
     void stateChanged();
     void recordFinished();                 // 有录制结果待命名
     void requestShowWindow();              // 第二个实例请求把窗口提到前面
-    void hotkeyAction(const QString& action);
 
 private:
     App() = default;
@@ -73,11 +73,12 @@ private:
     App& operator=(const App&) = delete;
 
     void stopPointerTasks();
-    void onHotkey(const QString& action);
+    void onGlobalHotkey();
     QString clickTypeText() const;
 
     Config m_cfg;
     bool m_ready = false;
+    int m_activeTab = 0;
 
     MouseTask* m_mouse = nullptr;
     TargetTask* m_image = nullptr;

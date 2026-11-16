@@ -30,19 +30,12 @@ protected:
     void dropEvent(QDropEvent* e) override;
 
 private:
-    struct HotkeyWidgets {
-        QWidget* row = nullptr;        // 一整行，直接 addWidget 就行
-        QCheckBox* enabled = nullptr;
-        QComboBox* key = nullptr;
-    };
-
     QWidget* buildMousePage();
     QWidget* buildImagePage();
     QWidget* buildWatchPage();
     QWidget* buildRecordPage();
     QWidget* buildLogPage();
 
-    HotkeyWidgets makeHotkeyRow(QWidget* parent, const QString& action, const QString& current, bool enabled);
     void refreshUi();
     void refreshScripts();
     void refreshWindows();
@@ -64,7 +57,7 @@ private:
     QPushButton* m_mouseBtn = nullptr;
     QLabel* m_clickTypeLabel = nullptr;
     QLabel* m_mouseState = nullptr;
-    HotkeyWidgets m_mouseHk;
+
 
     // 找图页
     QLabel* m_imgPreview = nullptr;
@@ -80,7 +73,7 @@ private:
     QComboBox* m_imgOnMiss = nullptr;
     QPushButton* m_imgBtn = nullptr;
     QPushButton* m_imgTestBtn = nullptr;
-    HotkeyWidgets m_imgHk;
+
 
     // 监视页
     QLabel* m_watchPreview = nullptr;
@@ -95,7 +88,7 @@ private:
     QSpinBox* m_watchLimit = nullptr;
     QPushButton* m_watchBtn = nullptr;
     QLabel* m_watchState = nullptr;
-    HotkeyWidgets m_watchHk;
+
 
     // 录制页
     QComboBox* m_scriptCombo = nullptr;
@@ -107,7 +100,7 @@ private:
     QPushButton* m_recBtn = nullptr;
     QPushButton* m_playBtn = nullptr;
     QLabel* m_recState = nullptr;
-    HotkeyWidgets m_recHk;
+
 
     QPlainTextEdit* m_log = nullptr;
     bool m_loading = false;

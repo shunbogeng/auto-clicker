@@ -59,6 +59,8 @@ KeySym vkToKeysym(int vk) {
     if (vk >= 0x41 && vk <= 0x5A) return XK_a + (vk - 0x41);
     if (vk >= 0x30 && vk <= 0x39) return XK_0 + (vk - 0x30);
     if (vk >= 0x70 && vk <= 0x7B) return XK_F1 + (vk - 0x70);
+    if (vk >= 0x7C && vk <= 0x87) return XK_F13 + (vk - 0x7C);   // F13–F24
+    if (vk >= 0x60 && vk <= 0x69) return XK_KP_0 + (vk - 0x60);  // 小键盘 0–9
     switch (vk) {
         case 0x20: return XK_space;
         case 0x0D: return XK_Return;
@@ -82,6 +84,24 @@ KeySym vkToKeysym(int vk) {
         case 0x13: return XK_Pause;
         case 0x14: return XK_Caps_Lock;
         case 0x2C: return XK_Print;
+        case 0x6A: return XK_KP_Multiply;
+        case 0x6B: return XK_KP_Add;
+        case 0x6D: return XK_KP_Subtract;
+        case 0x6E: return XK_KP_Decimal;
+        case 0x6F: return XK_KP_Divide;
+        case 0x90: return XK_Num_Lock;
+        case 0x91: return XK_Scroll_Lock;
+        case 0xBD: return XK_minus;
+        case 0xBB: return XK_equal;
+        case 0xBC: return XK_comma;
+        case 0xBE: return XK_period;
+        case 0xBF: return XK_slash;
+        case 0xDC: return XK_backslash;
+        case 0xBA: return XK_semicolon;
+        case 0xDE: return XK_apostrophe;
+        case 0xDB: return XK_bracketleft;
+        case 0xDD: return XK_bracketright;
+        case 0xC0: return XK_grave;
         default: return NoSymbol;
     }
 }
@@ -91,6 +111,8 @@ int keysymToVk(KeySym ks) {
     if (ks >= XK_A && ks <= XK_Z) return 0x41 + (ks - XK_A);
     if (ks >= XK_0 && ks <= XK_9) return 0x30 + (ks - XK_0);
     if (ks >= XK_F1 && ks <= XK_F12) return 0x70 + (ks - XK_F1);
+    if (ks >= XK_F13 && ks <= XK_F24) return 0x7C + (ks - XK_F13);
+    if (ks >= XK_KP_0 && ks <= XK_KP_9) return 0x60 + (ks - XK_KP_0);
     switch (ks) {
         case XK_space: return 0x20;
         case XK_Return: case XK_KP_Enter: return 0x0D;
@@ -114,6 +136,24 @@ int keysymToVk(KeySym ks) {
         case XK_Pause: return 0x13;
         case XK_Caps_Lock: return 0x14;
         case XK_Print: return 0x2C;
+        case XK_KP_Multiply: return 0x6A;
+        case XK_KP_Add: return 0x6B;
+        case XK_KP_Subtract: return 0x6D;
+        case XK_KP_Decimal: return 0x6E;
+        case XK_KP_Divide: return 0x6F;
+        case XK_Num_Lock: return 0x90;
+        case XK_Scroll_Lock: return 0x91;
+        case XK_minus: return 0xBD;
+        case XK_equal: return 0xBB;
+        case XK_comma: return 0xBC;
+        case XK_period: return 0xBE;
+        case XK_slash: return 0xBF;
+        case XK_backslash: return 0xDC;
+        case XK_semicolon: return 0xBA;
+        case XK_apostrophe: return 0xDE;
+        case XK_bracketleft: return 0xDB;
+        case XK_bracketright: return 0xDD;
+        case XK_grave: return 0xC0;
         default: return 0;
     }
 }

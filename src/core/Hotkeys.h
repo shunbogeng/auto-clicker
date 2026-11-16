@@ -1,4 +1,4 @@
-// 全局热键注册表：把「动作名 <-> 槽位 <-> 组合键」对上，按配置启用/禁用。
+// 全局热键：整个程序只有一个热键，按下就启动/停止「当前页签」的功能。
 #pragma once
 
 #include <QObject>
@@ -11,18 +11,16 @@ class Hotkeys : public QObject {
     Q_OBJECT
 public:
     explicit Hotkeys(QObject* parent = nullptr);
-    static int slotFor(const QString& action);   // mouse=1 image=2 watch=3 record=4 emergency=5
 
-    bool start();                 // 建立监听（内部用平台热键）
-    void apply(const Config& cfg);  // 按配置把所有键重新注册
+    bool start();                   // 建立监听（内部用平台热键）
+    void apply(const Config& cfg);   // 按配置重新注册
     void stop();
 
 signals:
-    void triggered(const QString& action);
+    void triggered();
 
 private:
     bool m_started = false;
-    QString m_slotAction[8];
 };
 
 }  // namespace ac

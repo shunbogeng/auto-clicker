@@ -25,4 +25,7 @@ int keyVk(const QString& name);             // "f9" -> 0x78；未知返回 0
 
 QStringList allKeyNames();                  // 可绑定的键（用于文档/自检）
 
+int vkFromQtKey(int qtKey);                 // Qt::Key -> 可移植 VK（只用于界面上按键捕获）
+QString comboFromQtKey(int qtKey, int mods); // Qt 按键 + 修饰位 -> "ctrl+alt+g"
+
 }  // namespace ac
