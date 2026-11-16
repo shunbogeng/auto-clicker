@@ -21,7 +21,7 @@ jobs:
             qt6-base-dev qt6-base-dev-tools libqt6opengl6-dev \
             libopencv-dev libxtst-dev libx11-dev libxcomposite-dev \
             libxfixes-dev libxrandr-dev libgl1-mesa-dev libglu1-mesa-dev \
-            ninja-build pkg-config xvfb openbox
+            ninja-build pkg-config xvfb openbox xcompmgr
 
       - name: 配置
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
@@ -34,7 +34,7 @@ jobs:
 
       - name: 端到端（真注入 + 录制 + 回放）
         run: |
-          xvfb-run -a --server-args="-screen 0 1920x1080x24" bash -c "openbox & sleep 1; ./build/ac_e2e"
+          xvfb-run -a --server-args="-screen 0 1920x1080x24" bash -c "openbox & sleep 1; xcompmgr & sleep 1; ./build/ac_e2e"
 
       - name: 打 tar.gz
         run: bash packaging/linux/make_package.sh

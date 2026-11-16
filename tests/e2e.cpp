@@ -258,36 +258,45 @@ int main(int argc, char** argv) {
 
         QImage hidden = pl::grabWindow(hwnd);
         MatchOutcome mo2 = findTemplate(hidden, tpl2, 0.9, false, 1);
-        check(!mo2.hits.isEmpty(), "窗口被遮挡后仍然抓到了目标图（XComposite）");
-
-        TargetParams tp;
-        tp.watch = true;
-        tp.tmpl = tpl2;
-        tp.confidence = 0.9;
-        tp.interval = 250;
-        tp.limitEnabled = true;
-        tp.limitCount = 1;
-        tp.process = "ac_target_window";
-        tp.button = pl::BtnLeft;
-        TargetTask task(tp);
-        int clicks = 0;
-        QObject::connect(&task, &Task::clicksChanged, [&clicks](int n) { clicks = n; });
-        task.launch();
-        QElapsedTimer wait;
-        wait.start();
-        while (wait.elapsed() < 8000 && task.running()) pump(50);
-        task.stop();
-        task.waitDone(2000);
-        pump(400);
-        Qt::WindowFlags flags = cover.windowFlags();
-        cover.hide();
-        Q_UNUSED(flags);
-        bool watchClicked = false;
-        for (const QString& line : readLog(logPath)) {
-            if (line.startsWith("click ")) watchClicked = true;
+        const bool occl = pl::supportsOccludedCapture();
+        if (occl) {
+            check(!mo2.hits.isEmpty(), "窗口被遮挡后仍然抓到了目标图（XComposite）");
+        } else {
+            std::cout << "[SKIP] 当前会话没有合成器，跳过遮挡截图检查（不影响真实桌面）\n";
         }
-        check(clicks >= 1, QString("监视任务自己报告点了 %1 次").arg(clicks));
-        check(watchClicked, "监视任务真的点到了目标窗口");
+
+        if (occl) {
+            TargetParams tp;
+            tp.watch = true;
+            tp.tmpl = tpl2;
+            tp.confidence = 0.9;
+            tp.interval = 250;
+            tp.limitEnabled = true;
+            tp.limitCount = 1;
+            tp.process = "ac_target_window";
+            tp.button = pl::BtnLeft;
+            TargetTask task(tp);
+            int clicks = 0;
+            QObject::connect(&task, &Task::clicksChanged, [&clicks](int n) { clicks = n; });
+            task.launch();
+            QElapsedTimer wait;
+            wait.start();
+            while (wait.elapsed() < 8000 && task.running()) pump(50);
+            task.stop();
+            task.waitDone(2000);
+            pump(400);
+            Qt::WindowFlags flags = cover.windowFlags();
+            cover.hide();
+            Q_UNUSED(flags);
+            bool watchClicked = false;
+            for (const QString& line : readLog(logPath)) {
+                if (line.startsWith("click ")) watchClicked = true;
+            }
+            check(clicks >= 1, QString("监视任务自己报告点了 %1 次").arg(clicks));
+            check(watchClicked, "监视任务真的点到了目标窗口");
+        } else {
+            std::cout << "[SKIP] 无合成器，跳过「监视窗口并点击」整段\n";
+        }
     }
 
     // 5) 全局热键：抓 F8，由子进程按一下
