@@ -20,8 +20,8 @@ jobs:
           sudo apt-get install -y \
             qt6-base-dev qt6-base-dev-tools libqt6opengl6-dev \
             libopencv-dev libxtst-dev libx11-dev libxcomposite-dev \
-            libxfixes-dev libxrandr-dev ninja-build pkg-config \
-            xvfb openbox
+            libxfixes-dev libxrandr-dev libgl1-mesa-dev libglu1-mesa-dev \
+            ninja-build pkg-config xvfb openbox
 
       - name: 配置
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
