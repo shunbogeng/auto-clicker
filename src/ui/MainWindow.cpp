@@ -56,7 +56,8 @@ QSpinBox* spin(int lo, int hi, int val, const QString& suffix, QWidget* parent, 
 
 QWidget* previewWidget(QLabel*& label, QWidget* parent) {
     label = new QLabel(parent);
-    label->setMinimumHeight(56);
+    label->setMinimumHeight(64);
+    label->setMaximumHeight(96);
     label->setAlignment(Qt::AlignCenter);
     label->setStyleSheet("border:1px dashed #cbd5e1; border-radius:6px; color:#94a3b8; background:#f8fafc;");
     label->setText("模板预览（也可以直接把图片拖进来）");
@@ -90,6 +91,10 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     head->addWidget(settingsBtn);
 
     m_tabs = new QTabWidget(central);
+    m_tabs->setStyleSheet(
+        "QTabWidget::pane{border:none;background:#ffffff;}"
+        "QTabBar::tab{padding:5px 9px;margin-right:2px;border:none;border-bottom:2px solid transparent;}"
+        "QTabBar::tab:selected{color:#0f766e;border-bottom:2px solid #0f766e;font-weight:600;}");
     m_tabs->addTab(buildMousePage(), "鼠标连点");
     m_tabs->addTab(buildImagePage(), "找图连点");
     m_tabs->addTab(buildWatchPage(), "监视窗口");
@@ -109,8 +114,8 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
     if (c.ui.w > 0 && c.ui.h > 0) {
         resize(c.ui.w, c.ui.h);
     } else {
-        adjustSize();
-        resize(qMax(suggest.width(), sizeHint().width()), qMin(suggest.height(), sizeHint().height() + 8));
+        resize(suggest);
+        setMinimumSize(350, 400);
     }
     if (c.ui.tab >= 0 && c.ui.tab < m_tabs->count()) m_tabs->setCurrentIndex(c.ui.tab);
 
@@ -280,7 +285,8 @@ QWidget* MainWindow::buildImagePage() {
     m_imgBtn = new QPushButton("开始找图连点", page);
     m_imgBtn->setMinimumHeight(34);
     m_imgBtn->setStyleSheet("QPushButton{background:#0f766e;color:white;border-radius:6px;font-weight:600;}");
-    m_imgTestBtn = new QPushButton("测一下能不能找到", page);
+    m_imgTestBtn = new QPushButton("测一下", page);
+    m_imgTestBtn->setToolTip("只截屏匹配一次，不点击，用来确认模板能不能找到");
     m_imgState = new QLabel(page);
     m_imgState->setStyleSheet("color:#475569;");
     m_imgState->setWordWrap(true);
@@ -298,6 +304,7 @@ QWidget* MainWindow::buildImagePage() {
     testRow->addWidget(m_imgTestBtn);
     testRow->addWidget(m_imgHk.row, 1);
     lay->addLayout(testRow);
+    lay->addWidget(hintLabel("命中后点它的中心；最高匹配度会写进日志。", page));
     lay->addWidget(m_imgState);
     lay->addStretch(1);
 
@@ -345,9 +352,9 @@ QWidget* MainWindow::buildWatchPage() {
     lay->setSpacing(6);
 
     m_watchProcess = new QLineEdit(page);
-    m_watchProcess->setPlaceholderText("进程名，例如 game.exe / chrome");
+    m_watchProcess->setPlaceholderText("如 game.exe / chrome");
     m_watchTitle = new QLineEdit(page);
-    m_watchTitle->setPlaceholderText("窗口标题包含的字（可留空）");
+    m_watchTitle->setPlaceholderText("标题关键词，可空");
     auto* winRow = new QHBoxLayout;
     winRow->addWidget(new QLabel("进程", page));
     winRow->addWidget(m_watchProcess, 1);
@@ -364,7 +371,7 @@ QWidget* MainWindow::buildWatchPage() {
     auto* top = new QHBoxLayout;
     m_watchPath = new QLineEdit(page);
     m_watchPath->setReadOnly(true);
-    m_watchPath->setPlaceholderText("目标图（窗口里出现它就去点）");
+    m_watchPath->setPlaceholderText("目标图");
     auto* pick = new QPushButton("选图片", page);
     auto* capture = new QPushButton("截屏框选", page);
     top->addWidget(m_watchPath, 1);
@@ -410,6 +417,7 @@ QWidget* MainWindow::buildWatchPage() {
     lay->addLayout(confRow);
     lay->addLayout(row2);
     lay->addWidget(m_watchBtn);
+    lay->addWidget(hintLabel("窗口被挡住也能看到；命中后先置顶再点。", page));
     lay->addWidget(m_watchHk.row);
     lay->addWidget(m_watchState);
     lay->addStretch(1);

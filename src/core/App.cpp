@@ -420,13 +420,11 @@ QSize App::suggestWindowSize() {
     QScreen* scr = QApplication::primaryScreen();
     if (!scr) return QSize(420, 340);
     const QRect g = scr->availableGeometry();
-    // 约屏幕面积的 1/14，宽度略大于高度，看起来不占地方
-    const double target = double(g.width()) * g.height() / 14.0;
-    const double ratio = 1.15;
-    int w = int(std::sqrt(target / ratio));
-    int h = int(w * ratio);
-    w = qBound(390, w, 560);
-    h = qBound(320, h, 620);
+    // 约屏幕面积的 1/16，宽度略大于高度，看起来不占地方
+    const double target = double(g.width()) * g.height() / 16.0;
+    const double ratio = 1.19;
+    int w = qBound(360, int(std::sqrt(target / ratio)), 560);
+    int h = qBound(410, int(w * ratio), 620);
     return QSize(w, h);
 }
 
