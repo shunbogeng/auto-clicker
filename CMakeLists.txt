@@ -50,7 +50,8 @@ if(WIN32)
   target_link_libraries(ac_core PUBLIC user32 gdi32 shcore)
 elseif(APPLE)
   target_link_libraries(ac_core PUBLIC
-    "-framework Cocoa" "-framework ApplicationServices" "-framework CoreGraphics")
+    "-framework Cocoa" "-framework ApplicationServices" "-framework CoreGraphics"
+    "-framework Carbon" "-framework AppKit")
 else()
   find_package(X11 REQUIRED)
   find_package(Threads REQUIRED)
