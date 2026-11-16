@@ -73,7 +73,7 @@ jobs:
         shell: pwsh
         run: |
           cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release `
-            -DOpenCV_DIR="$PWD/opencv/opencv/build"
+            -DOpenCV_DIR="$PWD/opencv/opencv/build" -DOpenCV_RUNTIME=vc16 -DOpenCV_ARCH=x64
 
       - name: 构建
         shell: pwsh
@@ -98,7 +98,7 @@ jobs:
 
   macos:
     name: macOS (仅可编译)
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
 
