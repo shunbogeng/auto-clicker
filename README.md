@@ -1,7 +1,21 @@
 # 连点器 AutoClicker
 
+![CI](https://github.com/shunbogeng/auto-clicker/actions/workflows/build.yml/badge.svg)
+
 一个跨平台（Windows / Linux / macOS）的鼠标连点器，C++17 + Qt6 Widgets + OpenCV 实现。
 界面、配置、脚本格式都沿用之前的 Python 版本，方便从老版本平滑迁移。
+
+![界面](docs/screenshot-mouse.png)
+
+## 下载安装包
+
+到 [Releases](https://github.com/shunbogeng/auto-clicker/releases) 页面下载对应平台的文件：
+
+| 平台 | 文件 | 用法 |
+| --- | --- | --- |
+| Windows 10/11 x64 | `AutoClicker-windows-x64.zip` | 解压后用 `AutoClicker.exe`，免安装，依赖已打进包里 |
+| Linux x64 | `AutoClicker-linux-x86_64.AppImage` | `chmod +x AutoClicker-linux-x86_64.AppImage` 后直接运行 |
+| macOS 12+ | `AutoClicker-macos.dmg` | 拖进「应用程序」；未签名未公证，首次打开需右键 → 打开，并在「系统设置 → 隐私与安全性 → 辅助功能 / 屏幕录制」里授权 |
 
 ## 功能
 
