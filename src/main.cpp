@@ -4,12 +4,14 @@
 #include "ui/MainWindow.h"
 
 #include <QApplication>
+#include <QIcon>
 
 int main(int argc, char** argv) {
     QApplication app(argc, argv);
     app.setApplicationName("AutoClicker");
     app.setOrganizationName("AutoClicker");
     app.setApplicationVersion("2.0.0");
+    app.setWindowIcon(QIcon(":/icon.png"));
 
     ac::App& core = ac::App::instance();
     if (!core.init()) return 0;   // 已有实例在跑时，init() 会把前台切过去然后返回 false

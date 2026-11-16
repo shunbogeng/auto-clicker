@@ -21,6 +21,7 @@ cp "$APP" "$stage/usr/bin/AutoClicker"
 cp "$ROOT/LICENSE" "$stage/"
 cp "$ROOT/docs/使用说明.md" "$stage/"
 cp "$ROOT/packaging/THIRD-PARTY-NOTICES.md" "$stage/"
+cp "$ROOT/assets/icon.png" "$stage/usr/share/icons/hicolor/256x256/apps/AutoClicker.png"
 
 cat > "$stage/AutoClicker.desktop" <<'EOF'
 [Desktop Entry]
@@ -35,7 +36,8 @@ EOF
 cp "$stage/AutoClicker.desktop" "$stage/usr/share/applications/"
 
 # AppImage
-if command -v linuxdeploy >/dev/null 2>&1 || [ -n "${USE_LINUXDEPLOY:-}" ]; then
+export APPIMAGE_EXTRACT_AND_RUN=1
+if [ "${USE_LINUXDEPLOY:-0}" = "1" ] || command -v linuxdeploy >/dev/null 2>&1; then
   TOOLS="$OUT_DIR/.tools"
   mkdir -p "$TOOLS"
   if [ ! -x "$TOOLS/linuxdeploy" ]; then
@@ -46,13 +48,17 @@ if command -v linuxdeploy >/dev/null 2>&1 || [ -n "${USE_LINUXDEPLOY:-}" ]; then
     ( cd "$TOOLS" && curl -L -o linuxdeploy-plugin-qt \
       https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage && chmod +x linuxdeploy-plugin-qt )
   fi
+  chmod +x "$TOOLS/linuxdeploy" "$TOOLS/linuxdeploy-plugin-qt" 2>/dev/null || true
   export PATH="$TOOLS:$PATH"
   export QMAKE="${QMAKE:-$(command -v qmake6 || command -v qmake)}"
   cd "$OUT_DIR"
-  ARCH=x86_64 linuxdeploy --appdir "$stage" \
-      --plugin qt --output appimage
-  mv ./*.AppImage "$OUT_DIR/AutoClicker-linux-x86_64.AppImage" 2>/dev/null || true
-  echo "AppImage：$OUT_DIR/AutoClicker-linux-x86_64.AppImage"
+  if ARCH=x86_64 linuxdeploy --appdir "$stage" --plugin qt --output appimage; then
+    mv ./*.AppImage "$OUT_DIR/AutoClicker-linux-x86_64.AppImage" 2>/dev/null || true
+    echo "AppImage：$OUT_DIR/AutoClicker-linux-x86_64.AppImage"
+    exit 0
+  fi
+  echo "AppImage 打包失败，退回 tar.gz"
+  cd "$OUT_DIR"
 else
   cd "$OUT_DIR"
   tar czf "AutoClicker-linux-x86_64-$VERSION.tar.gz" AutoClicker

@@ -4,6 +4,7 @@ project(AutoClicker VERSION 2.0.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 if(APPLE)
@@ -59,7 +60,10 @@ else()
     X11::X11 X11::Xtst X11::Xcomposite Threads::Threads)
 endif()
 
-add_executable(AutoClicker src/main.cpp)
+if(WIN32)
+  list(APPEND AC_APP_EXTRA src/windows/app.rc)
+endif()
+add_executable(AutoClicker src/main.cpp src/resources.qrc ${AC_APP_EXTRA})
 target_link_libraries(AutoClicker PRIVATE ac_core)
 set_target_properties(AutoClicker PROPERTIES
   WIN32_EXECUTABLE ON

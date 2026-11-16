@@ -1,8 +1,1 @@
-[Desktop Entry]
-Type=Application
-Name=连点器 AutoClicker
-Comment=鼠标连点 / 找图连点 / 监视窗口 / 录制回放
-Exec=AutoClicker
-Icon=AutoClicker
-Terminal=false
-Categories=Utility;
+usr/share/applications/AutoClicker.desktop
