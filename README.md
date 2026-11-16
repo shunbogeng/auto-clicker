@@ -133,6 +133,18 @@ Get-ChildItem -Recurse | Unblock-File
 
 彻底的正解是给 exe 加代码签名证书（OV 约每年 ¥1500–2500，仍要积累下载量后才不再弹；EV 约每年 ¥3000 以上，签名即刻生效，但需要企业资质），个人自用没必要。不建议把系统 SmartScreen 整体关掉。
 
+## 免费签名（自签名，仅限自己的机器）
+
+如果不想每次都点「仍要运行」，可以给 exe 加一张自签名证书，本机就不会再弹「未知发布者」：
+
+```powershell
+pwsh -File packaging\windows\sign_selfsigned.ps1 -ExePath .\dist\AutoClicker\AutoClicker.exe
+```
+
+脚本会建一张 `CN=AutoClicker Dev` 的代码签名证书（5 年有效），导入当前用户的「受信任的根证书颁发机构」和「受信任的发布者」，然后用 Windows SDK 的 signtool 签名。
+
+注意：这只对**装过这张证书的电脑**有效（就是你自己这台），别人下载后仍然是「未知发布者」。要消除陌生用户的提示，只有正规 CA 的证书：开源项目可以免费申请 SignPath Foundation 的 OV 签名（要求公开仓库 + OSI 许可 + 在 CI 里签名，见 https://signpath.org/）。
+
 ## 已知限制
 
 - **Linux Wayland**：Wayland 不允许普通程序全局注入输入 / 截屏 / 抓全局热键。请用 X11 会话（登录界面选 "X11"），或在 XWayland 下运行（部分功能仍会受限）。
