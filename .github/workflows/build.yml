@@ -64,15 +64,20 @@ jobs:
           7z x opencv.exe -oopencv -y | Out-Null
           Get-ChildItem opencv | Select-Object -First 5
 
+      - name: 准备 MSVC 环境
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
       - name: 配置
         shell: pwsh
         run: |
-          cmake -S . -B build -G "Visual Studio 17 2022" -A x64 `
-            -DOpenCV_DIR="$PWD/opencv/opencv/build" -DCMAKE_BUILD_TYPE=Release
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release `
+            -DOpenCV_DIR="$PWD/opencv/opencv/build"
 
       - name: 构建
         shell: pwsh
-        run: cmake --build build --config Release -j 4
+        run: cmake --build build -j 4
 
       - name: 自检（Windows 上会真的点几下鼠标）
         shell: pwsh
