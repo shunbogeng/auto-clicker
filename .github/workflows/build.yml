@@ -1,0 +1,143 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  linux:
+    name: Linux (X11)
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装依赖
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            qt6-base-dev qt6-base-dev-tools libqt6opengl6-dev \
+            libopencv-dev libxtst-dev libx11-dev libxcomposite-dev \
+            libxfixes-dev libxrandr-dev ninja-build pkg-config \
+            xvfb openbox
+
+      - name: 配置
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+
+      - name: 构建
+        run: cmake --build build -j"$(nproc)"
+
+      - name: 自检
+        run: xvfb-run -a --server-args="-screen 0 1920x1080x24" ./build/ac_selftest
+
+      - name: 端到端（真注入 + 录制 + 回放）
+        run: |
+          xvfb-run -a --server-args="-screen 0 1920x1080x24" bash -c "openbox & sleep 1; ./build/ac_e2e"
+
+      - name: 打 tar.gz
+        run: bash packaging/linux/make_package.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-package
+          path: dist/*.tar.gz
+
+  windows:
+    name: Windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装 Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: "6.7.2"
+          arch: win64_msvc2019_64
+          cache: true
+
+      - name: 下载 OpenCV
+        shell: pwsh
+        run: |
+          curl.exe -L -o opencv.exe https://github.com/opencv/opencv/releases/download/4.10.0/opencv-4.10.0-windows.exe
+          7z x opencv.exe -oopencv -y | Out-Null
+          Get-ChildItem opencv | Select-Object -First 5
+
+      - name: 配置
+        shell: pwsh
+        run: |
+          cmake -S . -B build -G "Visual Studio 17 2022" -A x64 `
+            -DOpenCV_DIR="$PWD/opencv/opencv/build" -DCMAKE_BUILD_TYPE=Release
+
+      - name: 构建
+        shell: pwsh
+        run: cmake --build build --config Release -j 4
+
+      - name: 自检（Windows 上会真的点几下鼠标）
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem build -Recurse -Filter ac_selftest.exe | Select-Object -First 1
+          & $exe.FullName
+
+      - name: 打包
+        shell: pwsh
+        run: |
+          pwsh packaging/windows/build_windows.ps1 -BuildDir build -OutDir dist `
+            -OpenCvDir "$PWD/opencv/opencv/build"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-package
+          path: dist/*.zip
+
+  macos:
+    name: macOS (仅可编译)
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装依赖
+        run: brew install opencv
+
+      - name: 安装 Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: "6.7.2"
+          cache: true
+
+      - name: 配置
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: 构建
+        run: cmake --build build -j 4
+
+      - name: 自检
+        run: ./build/ac_selftest || true
+
+      - name: 打包 dmg（未签名）
+        run: bash packaging/macos/make_package.sh || true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-package
+          path: dist/*.dmg
+
+  release:
+    name: 发布
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [linux, windows, macos]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/linux-package/*
+            artifacts/windows-package/*
+            artifacts/macos-package/*
+          generate_release_notes: true

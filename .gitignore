@@ -1,0 +1,35 @@
+# 构建产物
+build/
+build-*/
+cmake-build-*/
+*.o
+*.obj
+*.exe
+*.dll
+*.lib
+*.dylib
+*.app/
+*.dmg
+*.AppImage
+*.zip
+*.tar.gz
+
+# Qt / IDE
+*.autosave
+*.user
+.vscode/
+.idea/
+.cache/
+compile_commands.json
+
+# 运行期文件（配置、模板、录制的脚本都在程序目录或用户数据目录里）
+config.json
+templates/
+scripts/
+
+# 日志与临时文件
+*.log
+/tmp/
+
+# macOS
+.DS_Store
